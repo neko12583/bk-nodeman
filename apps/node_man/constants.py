@@ -742,7 +742,12 @@ class PolicyRollBackType:
 
 
 FILES_TO_PUSH_TO_PROXY = [
-    {"files": ["py36.tgz"], "name": _("检测 BT 分发策略（下发Py36包）")},
+    {
+        "files": [
+            "py36.tgz",
+        ],
+        "name": _("检测 BT 分发策略（下发Py36包）"),
+    },
     {
         "files": [
             "gse_client-windows-x86.tgz",

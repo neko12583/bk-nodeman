@@ -2,10 +2,27 @@
 # vim:ft=sh expandtab sts=4 ts=4 sw=4 nu
 # gse proxy安装脚本, 仅在节点管理2.0中使用
 
+get_cpu_arch () {
+    local cmd=$1
+    CPU_ARCH=$($cmd)
+    CPU_ARCH=$(echo ${CPU_ARCH} | tr 'A-Z' 'a-z')
+    if [[ "${CPU_ARCH}" =~ "x86_64" ]]; then
+        return 0
+    elif [[ "${CPU_ARCH}" =~ "x86" || "${CPU_ARCH}" =~ ^i[3456]86 ]]; then
+        return 1
+    elif [[ "${CPU_ARCH}" =~ "aarch" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+get_cpu_arch "uname -p" || get_cpu_arch "uname -m" || fail get_cpu_arch "Failed to get CPU arch or unsupported CPU arch, please contact the developer."
+
 # DEFAULT DEFINITION
 GSE_COMPARE_VERSION="1.7.2"
 NODE_TYPE=proxy
-PKG_NAME=gse_${NODE_TYPE}-linux-x86_64.tgz
+PKG_NAME=gse_${NODE_TYPE}-linux-${CPU_ARCH}.tgz
 
 GSE_AGENT_RUN_DIR=/var/run/gse
 GSE_AGENT_DATA_DIR=/var/lib/gse
@@ -522,6 +539,20 @@ start_basic_gse_plugin () {
     log start_plugin DONE "gse plugin 'basereport,processbeat start done."
 }
 
+download_aarch64_pkgs () {
+    local PKG_NAME={py36-aarch64.tgz,nginx-portable-aarch64.tgz}
+    for f in $PKG_NAME; do
+        http_status=$(http_proxy=$HTTP_PROXY https_proxy=$HTTPS_PROXY curl -o "$TMP_DIR/$f" \
+                --silent -w "%{http_code}" "$DOWNLOAD_URL/$f")
+
+        if [[ $http_status != "200" ]] && [[ "$http_status" != "000" ]]; then
+            fail download_aarch64_pkgs FAILED "file $f download failed. (url:$DOWNLOAD_URL/$f, http_status:$http_status)"
+        fi
+    done
+
+    log download_aarch64_pkgs DONE "aarch64 package download succeeded"
+}
+
 download_pkg () {
     local f http_status path
 
@@ -538,6 +569,10 @@ download_pkg () {
             fail download_pkg FAILED "file $f download failed. (url:$DOWNLOAD_URL/$f, http_status:$http_status)"
         fi
     done
+
+    if [[ "${CPU_ARCH}" =~ "aarch" ]]; then
+        download_aarch64_pkgs
+    fi
 
     log download_pkg DONE "gse_proxy package download succeeded"
 }

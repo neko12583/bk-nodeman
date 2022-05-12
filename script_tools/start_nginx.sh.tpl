@@ -1,8 +1,32 @@
+get_cpu_arch () {
+    local cmd=$1
+    CPU_ARCH=$($cmd)
+    CPU_ARCH=$(echo ${CPU_ARCH} | tr 'A-Z' 'a-z')
+    if [[ "${CPU_ARCH}" =~ "x86_64" ]]; then
+        return 0
+    elif [[ "${CPU_ARCH}" =~ "x86" || "${CPU_ARCH}" =~ ^i[3456]86 ]]; then
+        return 1
+    elif [[ "${CPU_ARCH}" =~ "aarch" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+get_cpu_arch "uname -p" || get_cpu_arch "uname -m" || fail get_cpu_arch "Failed to get CPU arch or unsupported CPU arch, please contact the developer."
+
 /opt/nginx-portable/nginx-portable stop || :;
 rm -rf /opt/nginx-portable/;
 rm -rf /opt/py36/;
-tar xvf %(nginx_path)s/py36.tgz -C /opt;
-tar xvf %(nginx_path)s/nginx-portable.tgz -C /opt;
+
+if [[ "${CPU_ARCH}" =~ "aarch" ]]; then
+    tar xvf %(nginx_path)s/py36-aarch64.tgz -C /opt;
+    tar xvf %(nginx_path)s/nginx-portable-aarch64.tgz -C /opt;
+else
+    tar xvf %(nginx_path)s/py36.tgz -C /opt;
+    tar xvf %(nginx_path)s/nginx-portable.tgz -C /opt;
+fi
+
 chmod -R 755 /data
 user=root
 group=root
