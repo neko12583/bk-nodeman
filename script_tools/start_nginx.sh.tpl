@@ -1,8 +1,25 @@
-/opt/nginx-portable/nginx-portable stop || :;
-rm -rf /opt/nginx-portable/;
-rm -rf /opt/py36/;
-tar xvf %(nginx_path)s/py36.tgz -C /opt;
-tar xvf %(nginx_path)s/nginx-portable.tgz -C /opt;
+get_cpu_arch () {
+    local cmd=$1
+    CPU_ARCH=$($cmd)
+    CPU_ARCH=$(echo ${CPU_ARCH} | tr 'A-Z' 'a-z')
+    if [[ "${CPU_ARCH}" =~ "x86_64" ]]; then
+        return 0
+    elif [[ "${CPU_ARCH}" =~ "x86" || "${CPU_ARCH}" =~ ^i[3456]86 ]]; then
+        return 1
+    elif [[ "${CPU_ARCH}" =~ "aarch" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+get_cpu_arch "uname -p" || get_cpu_arch "uname -m" || fail get_cpu_arch "Failed to get CPU arch or not unsupported CPU arch, please contact the developer."
+
+/opt/nginx-portable-${CPU_ARCH}/nginx-portable stop || :;
+rm -rf /opt/nginx-portable-${CPU_ARCH}/;
+rm -rf /opt/py36-${CPU_ARCH}/;
+tar xvf %(nginx_path)s/py36-${CPU_ARCH}.tgz -C /opt;
+tar xvf %(nginx_path)s/nginx-portable-${CPU_ARCH}.tgz -C /opt;
 chmod -R 755 /data
 user=root
 group=root
@@ -55,8 +72,8 @@ http {
             proxy_pass http://\$http_host\$request_uri;
         }
     }
-}" > /opt/nginx-portable/conf/nginx.conf;
-/opt/nginx-portable/nginx-portable start;
+}" > /opt/nginx-portable-${CPU_ARCH}/conf/nginx.conf;
+/opt/nginx-portable-${CPU_ARCH}/nginx-portable start;
 sleep 5
 is_port_listen_by_pid () {
     local pid regex ret
@@ -74,6 +91,6 @@ is_port_listen_by_pid () {
     done
     return "$ret"
 }
-pid=$(cat /opt/nginx-portable/logs/nginx.pid);
+pid=$(cat /opt/nginx-portable-${CPU_ARCH}/logs/nginx.pid);
 is_port_listen_by_pid "$pid" %(bk_nodeman_nginx_download_port)s %(bk_nodeman_nginx_proxy_pass_port)s
 exit $?
