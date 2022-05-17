@@ -12,7 +12,6 @@ get_cpu_arch () {
         return 1
     fi
 }
-
 get_cpu_arch "uname -p" || get_cpu_arch "uname -m" || fail get_cpu_arch "Failed to get CPU arch or unsupported CPU arch, please contact the developer."
 
 /opt/nginx-portable/nginx-portable stop || :;
