@@ -743,9 +743,7 @@ class PolicyRollBackType:
 
 FILES_TO_PUSH_TO_PROXY = [
     {
-        "files": [
-            "py36.tgz",
-        ],
+        "files": ["py36-x86_64.tgz", "py36-aarch64.tgz"],
         "name": _("检测 BT 分发策略（下发Py36包）"),
     },
     {
@@ -769,7 +767,8 @@ FILES_TO_PUSH_TO_PROXY = [
             "handle.exe",
             "unixdate.exe",
             "tcping.exe",
-            "nginx-portable.tgz",
+            "nginx-portable-x86_64.tgz",
+            "nginx-portable-aarch64.tgz",
         ],
         "name": _("下发安装工具"),
     },
