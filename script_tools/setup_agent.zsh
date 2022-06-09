@@ -497,17 +497,15 @@ recovery_config_file () {
 
 remove_agent () {
     log remove_agent - 'trying to stop old agent'
-    stop_agent
 
+    stop_agent
     backup_config_file
+
     log remove_agent - "trying to remove old agent directory(${AGENT_SETUP_PATH})"
 
     rm -rf "${AGENT_SETUP_PATH}"
 
-    if [[ "$REMOVE" == "TRUE" ]]; then
-        log remove_agent DONE "agent removed"
-        exit 0
-    fi
+    log remove_agent DONE "agent removed"
 }
 
 get_config () {
@@ -846,12 +844,17 @@ DEBUG_LOG_FILE=${TMP_DIR}/nm.${0##*/}.${TASK_ID}.debug
 # exec &> >(tee "$DEBUG_LOG_FILE")
 
 log check_env - "Args are: $*"
-for step in check_env \
-            download_pkg \
-            remove_agent \
-            remove_proxy_if_exists \
-            setup_agent \
-            setup_startup_scripts \
-            check_deploy_result; do
-    $step
-done
+
+if [[ "$REMOVE" == "TRUE" ]]; then
+    remove_agent
+else
+    for step in check_env \
+                download_pkg \
+                remove_agent \
+                remove_proxy_if_exists \
+                setup_agent \
+                setup_startup_scripts \
+                check_deploy_result; do
+        $step
+    done
+fi

@@ -394,17 +394,15 @@ recovery_config_file () {
 
 remove_agent () {
     log remove_agent - 'trying to stop old agent'
+
     stop_agent
     backup_config_file
+
     log remove_agent - "trying to remove old agent diretory(${AGENT_SETUP_PATH})"
+
     rm -rf "${AGENT_SETUP_PATH}"
 
-    if [[ "$REMOVE" == "TRUE" ]]; then
-        log remove_agent DONE "agent removed"
-        exit 0
-    else
-        [[ -d $AGENT_SETUP_PATH ]] && return 0 || return 1
-    fi
+    log remove_agent DONE "agent removed"
 }
 
 
@@ -734,15 +732,21 @@ LOG_FILE=/tmp/nm.${0##*/}.$TASK_ID
 log check_env - "$@"
 # 整体安装流程:
 #pre_view
-for step in check_env \
-            download_pkg \
-            remove_crontab \
-            remove_agent \
-            remove_proxy_if_exists \
-            setup_agent \
-            start_basic_gse_plugin \
-            setup_startup_scripts \
-            setup_crontab \
-            check_deploy_result; do
-    $step
-done
+
+if [[ "$REMOVE" == "TRUE" ]]; then
+    remove_crontab
+    remove_agent
+else
+    for step in check_env \
+                download_pkg \
+                remove_crontab \
+                remove_agent \
+                remove_proxy_if_exists \
+                setup_agent \
+                start_basic_gse_plugin \
+                setup_startup_scripts \
+                setup_crontab \
+                check_deploy_result; do
+        $step
+    done
+fi
