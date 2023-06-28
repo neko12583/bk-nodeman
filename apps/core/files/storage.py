@@ -16,6 +16,8 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage, Storage, get_storage_class
 from django.utils.deconstruct import deconstructible
 from django.utils.functional import cached_property
+from django.core.files import File, locks
+from django.core.files.move import file_move_safe
 
 from apps.utils.basic import filter_values
 from apps.utils.files import md5sum
