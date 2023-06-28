@@ -88,7 +88,7 @@ WINDOWS_SEP = "\\"
 
 # 临时文件存放位置
 TMP_DIR = ("/tmp", "c:/")[platform.system() == "Windows"]
-TMP_DIR = os.path.join(settings.BASE_DIR)
+# TMP_DIR = os.path.join(settings.BASE_DIR)
 
 # 临时文件名格式模板
 TMP_FILE_NAME_FORMAT = "nm_tf_{name}"
