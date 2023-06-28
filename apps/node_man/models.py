@@ -1468,7 +1468,10 @@ class UploadPackage(models.Model):
                 source_app_code=source_app_code,
             )
 
-        except Exception:
+        except Exception as e:
+            print("UploadPackage create_record error: ", e)
+            import traceback
+            print("detail info: ", traceback.print_exc())
             logger.error(
                 "failed to mv source_file -> {file_path} to target_file_path -> {target_file_path}, "
                 "err_msg -> {err_msg}".format(
