@@ -305,6 +305,7 @@ def get_storage(storage_type: Optional[str] = None, safe: bool = False, **constr
     """
     storage_type = storage_type or settings.STORAGE_TYPE
     storage_import_path = settings.STORAGE_TYPE_IMPORT_PATH_MAP.get(storage_type)
+    print("storage_import_path: ", storage_import_path)
     if storage_import_path is None:
         raise ValueError(f"please provide valid storage_type {settings.STORAGE_TYPE_IMPORT_PATH_MAP.values()}")
     storage_class = get_storage_class(import_path=storage_import_path)
