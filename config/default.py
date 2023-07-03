@@ -707,6 +707,9 @@ USE_CMDB_SUBSCRIPTION_TRIGGER = get_type_env(key="BKAPP_USE_CMDB_SUBSCRIPTION_TR
 
 VERSION_LOG = {"MD_FILES_DIR": os.path.join(PROJECT_ROOT, "release"), "LANGUAGE_MAPPINGS": {"en": "en"}}
 
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = None
+FILE_UPLOAD_PERMISSIONS = None
+
 # remove disabled apps
 if locals().get("DISABLED_APPS"):
     INSTALLED_APPS = locals().get("INSTALLED_APPS", [])
