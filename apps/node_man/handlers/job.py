@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import get_language
 from django.utils.translation import ugettext_lazy as _
@@ -28,10 +29,11 @@ from apps.node_man.handlers.cloud import CloudHandler
 from apps.node_man.handlers.cmdb import CmdbHandler
 from apps.node_man.handlers.host import HostHandler
 from apps.utils import APIModel
-from apps.utils.basic import filter_values, to_int_or_default
+from apps.utils.basic import filter_values, to_int_or_default, is_v4, is_v6, exploded_ip
 from apps.utils.local import get_request_username
 from apps.utils.time_tools import local_dt_str2utc_dt
 from common.api import NodeApi
+
 
 logger = logging.getLogger("app")
 
@@ -173,9 +175,33 @@ class JobHandler(APIModel):
                 job_ids.add(job_id)
             kwargs["id__in"] = job_ids
 
+        inner_ip_query_q_obj = Q()
+        if params.get("inner_ip_list"):
+            instance_id_list = tools.JobTools.get_instance_ids_by_ips(params["inner_ip_list"])
+
+            # 处理时间范围
+            instance_record_query_kwargs = {
+                "instance_id__in": instance_id_list,
+                "start_time__gte": params.get("start_time"),
+                "start_time__lte": params.get("end_time"),
+            }
+
+            # subscription_id 查询更快，但使用 subscription_id 不够准确，subscription 的范围有变化的可能
+            task_id_list = models.SubscriptionInstanceRecord.objects.filter(
+                **filter_values(instance_record_query_kwargs)
+            ).values_list("task_id", flat=True)
+
+            # 需要查询指定字段存在列表task_id_list中任意一个值的记录，而不是要包含所有值的记录
+            for task_id in task_id_list:
+                # json 字段不支持 __contains__in
+                inner_ip_query_q_obj |= Q(task_id_list__contains=[task_id])
+
         # 过滤None值并筛选Job
         # 此处不过滤空列表（filter_empty=False），job_id, job_type 存在二次解析，若全部值非法得到的是空列表，期望应是查不到数据
-        job_result = models.Job.objects.filter(**filter_values(kwargs))
+        if inner_ip_query_q_obj:
+            job_result = models.Job.objects.filter(inner_ip_query_q_obj, **filter_values(kwargs))
+        else:
+            job_result = models.Job.objects.filter(**filter_values(kwargs))
 
         if params.get("sort"):
             sort_head = params["sort"]["head"]

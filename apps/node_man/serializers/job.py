@@ -26,6 +26,7 @@ from apps.node_man.handlers.cmdb import CmdbHandler
 from apps.node_man.periodic_tasks.sync_cmdb_host import bulk_differential_sync_biz_hosts
 from apps.utils import basic
 from env.constants import GseVersion
+from script_tools.setup_pagent import is_ip
 
 
 def set_agent_setup_info_to_attrs(attrs):
@@ -67,6 +68,7 @@ class ListSerializer(serializers.Serializer):
     status = serializers.ListField(label=_("状态"), required=False)
     created_by = serializers.ListField(label=_("执行者"), required=False)
     bk_biz_id = serializers.ListField(label=_("业务ID"), required=False)
+    inner_ip_list = serializers.ListField(label=_("搜索IP"), required=False)
     page = serializers.IntegerField(label=_("当前页数"), required=False, default=1)
     pagesize = serializers.IntegerField(label=_("分页大小"), required=False, default=10)
     sort = SortSerializer(label=_("排序"), required=False)
