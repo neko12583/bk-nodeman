@@ -22,13 +22,13 @@ MarkupSafe==1.1.1
 pyCryptodome==3.9.7
 pyOpenSSL==21.0.0
 pynacl==1.4.0
-gunicorn==19.6.0
+gunicorn==20.1.0
 arrow==0.15.4
 PyJWT==1.7.1
 whitenoise==5.2.0
 mysqlclient==2.0.3
 eventlet==0.25.1
-gevent==1.2.2
+gevent==22.10.2
 impacket==0.9.22
 paramiko==2.7.2
 jinja2==2.11.1
