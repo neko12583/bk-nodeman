@@ -957,6 +957,13 @@ class RenderAndPushConfigService(PluginBaseService, JobV3BaseService):
                 subscription_step, subscription_instance.instance_info, target_host, process_status.name, agent_config
             )
 
+            step_params = policy_step_adapter.get_matching_step_params(
+                target_host.os_type.lower(),
+                target_host.cpu_arch
+            )
+            if step_params:
+                context.update(step_params.get("context") or {})
+
             # 根据配置模板和上下文变量渲染配置文件
             rendered_configs = render_config_files_by_config_templates(
                 policy_step_adapter.get_matching_config_tmpl_objs(target_host.os_type, target_host.cpu_arch),

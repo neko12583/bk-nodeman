@@ -89,7 +89,7 @@ class PluginStepParamsSerializer(serializers.Serializer):
 
 class PolicyStepParamsSerializer(serializers.Serializer):
     class PolicyStepParamsInfo(PluginStepParamsSerializer):
-        os = serializers.CharField(required=True, label="操作系统")
+        os_type = serializers.CharField(required=True, label="操作系统")
         cpu_arch = serializers.CharField(required=True, label="cpu架构")
 
     details = serializers.ListField(child=PolicyStepParamsInfo())
@@ -194,7 +194,10 @@ class PolicyStepAdapter:
             return self._os_key_params_map
         policy_params_list = self.params["details"]
         os_cpu_params_map = {
-            self.get_os_key(policy_params["os"], policy_params["cpu_arch"]): policy_params
+            self.get_os_key(
+                policy_params.get("os_type") or policy_params["os"],
+                policy_params["cpu_arch"]
+            ): policy_params
             for policy_params in policy_params_list
         }
         setattr(self, "_os_key_params_map", os_cpu_params_map)
