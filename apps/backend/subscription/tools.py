@@ -1004,10 +1004,23 @@ def get_all_subscription_steps_context(
     """
     from apps.backend.subscription.steps import StepFactory
 
+    # 避免循环调用 lower()
+    target_host_os_type = target_host.os_type.lower()
+    target_host_cpu_arch = target_host.cpu_arch.lower()
+
     context = {}
     all_step_data = {}
     for step in subscription_step.subscription.steps:
-        step_context = order_dict(step.params.get("context") or {})
+        step_context = {}
+        # 根据目标主机的操作系统与架构，获取对应的 context
+        for params_detail in step.params["details"]:
+            os_type = params_detail.get("os_type", "").lower()
+            cpu_arch = params_detail.get("cpu_arch", "").lower()
+            if os_type == target_host_os_type and cpu_arch == target_host_cpu_arch:
+                step_context = order_dict(params_detail.get("context") or {})
+                break
+
+        # 增加 control_info
         step_context.update(StepFactory.get_step_manager(step).get_step_data(instance_info, target_host, agent_config))
         all_step_data[step.step_id] = step_context
 
@@ -1022,8 +1035,8 @@ def get_all_subscription_steps_context(
         nodeman={
             "host": {
                 "bk_host_id": target_host.bk_host_id,
-                "os_type": target_host.os_type,
-                "cpu_arch": target_host.cpu_arch,
+                "os_type": target_host,
+                "cpu_arch": target_host,
                 "inner_ip": target_host.inner_ip,
                 "outer_ip": target_host.outer_ip,
                 "login_ip": target_host.login_ip,
