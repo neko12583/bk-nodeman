@@ -199,6 +199,7 @@ export interface IParamsChild {
   form: Dictionary
   data: IParamsData[]
   inputName?: string
+  variables?: any
 }
 
 // 参数配置 - item
@@ -214,6 +215,7 @@ export interface IParamsConfig extends IPk {
   childActive: string[]
   defaultActive: string[]
   is_main?: boolean
+  variables?: any
   // inputName?: string
 
   // config_templates:Array[1]

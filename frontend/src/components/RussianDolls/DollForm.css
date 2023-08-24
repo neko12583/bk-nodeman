@@ -1,0 +1,54 @@
+.russian-dolls-form {
+  .nodeman-icon {
+    font-size: 16px;
+    cursor: pointer;
+    &:hover:not(.disabled) {
+      color: #3a84ff;
+    }
+
+    &.disabled {
+      color: #c4c6cc;
+      cursor: not-allowed;
+    }
+    & + .nodeman-icon {
+      margin-left: 10px
+    }
+  }
+}
+
+.item-array {
+  & > .bk-form-content {
+    display: flex;
+    align-items: center;
+  }
+  .array-child-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding-top: 32px;
+  }
+  .array-child {
+    display: flex;
+    flex: 1
+  }
+  .array-content-add {
+    font-size: 16px;
+  }
+}
+.item-object {
+  flex: 1
+}
+
+.array-child + .array-child {
+  margin-top: 20px;
+}
+
+.child-btns {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+  width: 50px;
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-left: 10px; 
+}
