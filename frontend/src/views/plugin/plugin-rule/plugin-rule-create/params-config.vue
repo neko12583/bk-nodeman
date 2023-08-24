@@ -39,15 +39,26 @@
 
           <!-- collapse-content -->
           <template #content>
-            <ExceptionCard v-if="!mainItem.data.length && !mainItem.child.length" :text="$t('没有需要填写的参数')" />
+            <!-- <ExceptionCard v-if="!mainItem.data.length && !mainItem.child.length" :text="$t('没有需要填写的参数')" /> -->
+            <ExceptionCard
+              v-if="isPluginType || (!mainItem.variables.properties && !mainItem.child.variables)"
+              :text="$t('没有需要填写的参数')" />
 
-            <bk-form
+            <!-- :ref="`form${mainItem.name}`" -->
+            <!-- ref="nnnnnnnn" -->
+            <DollForm
+              v-if="!isPluginType && mainItem.variables.properties"
+              :ref="`form${mainItem.name}`"
+              :data="mainItem.variables"
+              :label-width="110" />
+
+            <!-- <bk-form
               v-if="mainItem.data.length"
               :model="mainItem.form"
               :ref="`form${mainItem.name}`"
               :label-width="labelWidth">
 
-              <!-- main-content -->
+              main-content
               <bk-form-item
                 v-for="main in mainItem.data"
                 :key="main.inputName"
@@ -56,14 +67,11 @@
                 :icon-offset="-25"
                 :required="main.required"
                 :rules="main.rules">
-                <!-- <div class="item-content"> -->
                 <div
                   :class="[
                     'item-content',
                     { 'is-focus': activeInput === main.inputName && (isFocus || isClick) }
                   ]">
-                  <!-- @mouseleave="handleMouseLeave">
-                @mouseenter="handleMouseenter(mainItem, main.prop)" -->
                   <bk-input
                     class="item-content-input"
                     :class="{ 'ml42': main.disabled }"
@@ -117,7 +125,7 @@
               </div>
             </section>
 
-            <!-- child-content -->
+            child-content
             <section v-if="mainItem.child.length">
               <template v-for="child in mainItem.child">
                 <div class="mt30" v-if="mainItem.childActive.includes(child.name)" :key="child.inputName">
@@ -145,7 +153,6 @@
                       :icon-offset="50"
                       :required="childItem.required"
                       :rules="childItem.rules">
-                      <!-- <div class="item-content"> -->
                       <div
                         :class="[
                           'item-content',
@@ -195,7 +202,7 @@
                   </bk-form>
                 </div>
               </template>
-            </section>
+            </section> -->
           </template>
         </bk-collapse-item>
 
@@ -239,6 +246,7 @@ import { debounce, deepClone } from '@/common/util';
 import VariablePopover from './variable-popover.vue';
 import ExceptionCard from '@/components/exception/exception-card.vue';
 import { reguRequired } from '@/common/form-check';
+import { pluginOperate } from '../../operateConfig';
 
 interface IVariables {
   title: string
@@ -321,6 +329,12 @@ export default class ParamsConfig extends Vue {
     }
     return list.filter(item => item.setStr.includes(this.searchValue));
   }
+  private get isPluginType() {
+    return pluginOperate.includes(this.type);
+  }
+  private get strategyData() {
+    return PluginStore.strategyData;
+  }
 
   private mounted() {
     this.listenResize = debounce(300, () => this.handleResize());
@@ -391,7 +405,7 @@ export default class ParamsConfig extends Vue {
       const list = await PluginStore.getConfigVariables({ config_tpl_ids: idList });
       this.loading = false;
       list.forEach((item: IVariablesRes) => {
-        const itemList = Object.entries(item.variables.properties || {});
+        const itemList = Object.entries(item.variables?.properties || {});
         const form: Dictionary = {};
         let variableList: IParamsData[] = [];
         // 处理表单遍历所需的统一格式 && 回填参数
@@ -428,6 +442,7 @@ export default class ParamsConfig extends Vue {
             })));
             // 如果是主配置
             if (item.is_main) {
+              sysItem.variables = item.variables || {};
               sysItem.data.splice(0, sysItem.data.length, ...variableList);
               this.$set(sysItem, 'form', Object.assign({}, copyForm)); // 回填
             } else { // 如果是子配置，放入child
@@ -438,6 +453,7 @@ export default class ParamsConfig extends Vue {
                 is_main: item.is_main,
                 form: Object.assign({}, copyForm),
                 data: [...variableList],
+                variables: item.variables || {},
               });
             }
           }
@@ -554,27 +570,28 @@ export default class ParamsConfig extends Vue {
           return list;
         }, checkList);
       }
-      if (item.child && item.child.length) {
-        item.child.forEach((child) => {
-          if (item.childActive.includes(child.name)) {
-            const childRefs: any = this.$refs[`form${child.name}`];
-            if (childRefs?.length) {
-              childRefs.reduce((list: Promise<boolean>[], childRef: any) => {
-                list.push(childRef.validate());
-                return list;
-              }, checkList);
-            }
-          }
-        });
-      }
+      // if (item.child && item.child.length) {
+      //   item.child.forEach((child) => {
+      //     if (item.childActive.includes(child.name)) {
+      //       const childRefs: any = this.$refs[`form${child.name}`];
+      //       if (childRefs?.length) {
+      //         childRefs.reduce((list: Promise<boolean>[], childRef: any) => {
+      //           list.push(childRef.validate());
+      //           return list;
+      //         }, checkList);
+      //       }
+      //     }
+      //   });
+      // }
     });
     return Promise.all(checkList)
       .then(() => false)
-      .catch(() => {
-        const active = this.list.filter(item => Object.values(item.form).some(value => !value)).map(item => item.name);
-        this.activeName = Array.from(new Set((active as string[]).concat(this.activeName)));
-        return true;
-      });
+      .catch(() =>
+        // const active = this.list.filter(item =>
+        //   Object.values(item.form).some(value => !value)).map(item => item.name);
+        // this.activeName = Array.from(new Set((active as string[])
+        //   .concat(this.activeName)));
+        true);
   }
 
   // 更新策略的 params 和 configs 属性
@@ -582,25 +599,27 @@ export default class ParamsConfig extends Vue {
     this.handleValidateForm();
     const formatValue = JSON.parse(JSON.stringify(PluginStore.strategyData.params));
     this.list.forEach((item) => {
+      const formRef = (this.$refs[`form${item.name}`] as any)?.[0];
       const params: Dictionary = {
         cpu_arch: item.cpu_arch,
         os_type: item.os,
-        context: {}, // 主配置、子配置的值都集合到context
+        context: formRef?.getFormData?.(), // 主配置、子配置的值都集合到context
       };
-      const itemList = Object.entries(item.form);
-      itemList.forEach(([key, value]) => {
-        params.context[key] = value;
-      });
+      console.log(formRef, params);
+      // const itemList = Object.entries(item.form);
+      // itemList.forEach(([key, value]) => {
+      //   params.context[key] = value;
+      // });
       // 子配置的值非空时 覆盖相同字段的值
-      if (item.childActive.length && item.child) {
-        item.child.forEach((child) => {
-          if (item.childActive.includes(child.name)) {
-            Object.keys(child.form).forEach((key) => {
-              params.context[key] = child.form[key] || params.context[key] || '';
-            });
-          }
-        });
-      }
+      // if (item.childActive.length && item.child) {
+      //   item.child.forEach((child) => {
+      //     if (item.childActive.includes(child.name)) {
+      //       Object.keys(child.form).forEach((key) => {
+      //         params.context[key] = child.form[key] || params.context[key] || '';
+      //       });
+      //     }
+      //   });
+      // }
       const index = formatValue.findIndex((param: any) => `${param.os_type} ${param.cpu_arch}` === item.title);
       if (index < 0) {
         formatValue.push(params);
@@ -642,6 +661,7 @@ export default class ParamsConfig extends Vue {
     const copySysIdRecord = [...this.sysIdRecord];
     this.sysIdRecord = this.list.map(item => `${item.name}`);
     // console.log(`loading: ${this.loading}`, !this.sysIdRecord.every(sys => copySysIdRecord.includes(sys)))
+    // return false
     return this.loading ? false : !this.sysIdRecord.every(sys => copySysIdRecord.includes(sys));
   }
 
