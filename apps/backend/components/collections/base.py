@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import os
 import traceback
 import typing
+
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -32,6 +33,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from apps.adapters.api.gse import GseApiBaseHelper, get_gse_api_helper
+from apps.backend.api.constants import POLLING_TIMEOUT
 from apps.backend.subscription import errors
 from apps.core.files.storage import get_storage
 from apps.node_man import constants, models
@@ -203,6 +205,19 @@ class DBHelperMixin:
                 return fh.read().encode()
 
 
+class PollingTimeoutMixin:
+    @property
+    def service_polling_timeout(self) -> int:
+        service_name = self.__class__.__name__
+        all_service_polling_timeout: dict = models.GlobalSettings.get_config(
+            key=models.GlobalSettings.KeyEnum.BACKEND_SERVICE_POLLING_TIMEOUT.value,
+            default={},
+        )
+
+        service_polling_timeout = all_service_polling_timeout.get(service_name, POLLING_TIMEOUT)
+        return service_polling_timeout
+
+
 @dataclass
 class CommonData:
     """
@@ -222,7 +237,7 @@ class CommonData:
     subscription_instance_ids: Set[int]
 
 
-class BaseService(Service, LogMixin, DBHelperMixin):
+class BaseService(Service, LogMixin, DBHelperMixin, PollingTimeoutMixin):
 
     # 失败订阅实例ID - 失败原因 映射关系
     failed_subscription_instance_id_reason_map: Optional[Dict[int, Any]] = None
